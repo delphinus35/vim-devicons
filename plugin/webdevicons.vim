@@ -4,7 +4,6 @@
 " License: see LICENSE
 
 let s:version = '0.7.1'
-let s:operatingsystem = system("uname -s")
 
 " standard fix/safety: line continuation (avoiding side effects) {{{1
 "========================================================================
@@ -110,6 +109,13 @@ if !exists('g:WebDevIconsNerdTreeGitPluginForceVAlign')
   let g:WebDevIconsNerdTreeGitPluginForceVAlign = 1
 endif
 
+" if set to 1, it uses system() call to detect OS.
+" it is needed to show Mac Logo when you open UNIX fileformat files on OS X
+" with vim that has no 'macunix' feature.
+if !exists('g:WebDevIconsUseSystemCallToDetectOS')
+  let g:WebDevIconsUseSystemCallToDetectOS = 0
+endif
+
 " config defaults {{{1
 "========================================================================
 
@@ -136,6 +142,24 @@ endif
 
 " local functions {{{2
 "========================================================================
+
+" scope: local
+function s:detectDarwin()
+  if has('macunix')
+    let s:is_darwin = 1
+    return
+  endif
+
+  if has('unix') == 0 || g:WebDevIconsUseSystemCallToDetectOS == 0
+    let s:is_darwin = 0
+    return
+  endif
+
+  if system('uname -s') ==# "Darwin\n"
+    let s:is_darwin = 1
+    return
+  endif
+endfunction
 
 " scope: local
 function! s:strip(input)
@@ -437,6 +461,7 @@ endfunction
 
 " scope: local
 function! s:initialize()
+  call s:detectDarwin()
   call s:setDictionaries()
   call s:setSyntax()
   call s:setCursorHold()
@@ -534,7 +559,7 @@ function! WebDevIconsGetFileFormatSymbol(...)
   if &fileformat == "dos"
     let fileformat = ""
   elseif &fileformat == "unix"
-    if s:operatingsystem == "Darwin\n"
+    if s:is_darwin
       let fileformat = ""
     else
       let fileformat = ""
