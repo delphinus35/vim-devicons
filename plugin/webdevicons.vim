@@ -109,13 +109,6 @@ if !exists('g:WebDevIconsNerdTreeGitPluginForceVAlign')
   let g:WebDevIconsNerdTreeGitPluginForceVAlign = 1
 endif
 
-" if set to 1, it uses system() call to detect OS.
-" it is needed to show Mac Logo when you open UNIX fileformat files on OS X
-" with vim that has no 'macunix' feature.
-if !exists('g:WebDevIconsUseSystemCallToDetectOS')
-  let g:WebDevIconsUseSystemCallToDetectOS = 0
-endif
-
 " config defaults {{{1
 "========================================================================
 
@@ -144,21 +137,33 @@ endif
 "========================================================================
 
 " scope: local
-function s:detectDarwin()
-  if has('macunix')
-    let s:is_darwin = 1
-    return
+function s:isDarwin()
+  if exists('s:is_darwin')
+    return s:is_darwin
   endif
 
-  if has('unix') == 0 || g:WebDevIconsUseSystemCallToDetectOS == 0
+  if exists('g:WebDevIconsOS')
+    let s:is_darwin = g:WebDevIconsOS ==? 'Darwin'
+    return s:is_darwin
+  endif
+
+  if has('macunix')
+    let s:is_darwin = 1
+    return s:is_darwin
+  endif
+
+  if has('unix') == 0
     let s:is_darwin = 0
-    return
+    return s:is_darwin
   endif
 
   if system('uname -s') ==# "Darwin\n"
     let s:is_darwin = 1
-    return
+  else
+    let s:is_darwin = 0
   endif
+
+  return s:is_darwin
 endfunction
 
 " scope: local
@@ -461,7 +466,6 @@ endfunction
 
 " scope: local
 function! s:initialize()
-  call s:detectDarwin()
   call s:setDictionaries()
   call s:setSyntax()
   call s:setCursorHold()
@@ -559,7 +563,7 @@ function! WebDevIconsGetFileFormatSymbol(...)
   if &fileformat == "dos"
     let fileformat = ""
   elseif &fileformat == "unix"
-    if s:is_darwin
+    if s:isDarwin()
       let fileformat = ""
     else
       let fileformat = ""
